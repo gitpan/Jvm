@@ -1,6 +1,6 @@
-# Ident = $Id: README,v 1.5 2000/09/24 03:29:31 yw Exp $
+# Ident = $Id: README,v 1.6 2001/04/28 05:20:26 yw Exp $
 
-Jvm - Java Virtual Machine Extension Version 0.9
+Jvm - Java Virtual Machine Extension Version 0.9.1
 
 This is a Perl 5 extension to Java Virtual Machine. Document is in 
 Jvm.pm, run 'perldoc Jvm.pm' to read it.
@@ -30,10 +30,8 @@ Sun JDK1.3 beta
 Linux 2.2 or above
 Perl 5.005 or above
 
-Ye, Wei  <yw@alabanza.net>
-10E Baltimore St, Suite 1100
-Baltimore, MD 21202
-USA
+Ye, Wei  <w_e_i_y_e@yahoo.com>
+San Jose, California
 
-Sep 20, 2000
+Apr 27, 2000
 

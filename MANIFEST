@@ -3,4 +3,10 @@ Jvm.pm
 Jvm.xs
 MANIFEST
 Makefile.PL
+README
 test.pl
+typemap
+examples/Makefile
+examples/Prog.java
+examples/awt.pl
+examples/demo.pl

@@ -4,7 +4,7 @@
 # This program is free software; you can redistribute it and/or 
 # modify it under the same terms as Perl itself. 
 #
-# Ident = $Id: Jvm.pm,v 1.16 2000/09/24 04:42:46 yw Exp $
+# Ident = $Id: Jvm.pm,v 1.17 2001/04/28 05:20:26 yw Exp $
 
 #############################
 package jobject;
@@ -129,7 +129,7 @@ $DEBUG = 0;
 @EXPORT = qw(
 	
 );
-$VERSION = '0.9';
+$VERSION = '0.9.1';
 
 bootstrap Jvm $VERSION;
 
