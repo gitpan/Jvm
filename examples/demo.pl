@@ -1,9 +1,11 @@
 #!/usr/bin/perl -w
-#Ident = $Id: demo.pl,v 1.3 2000/09/24 03:28:02 yw Exp $
+#Ident = $Id: demo.pl,v 1.4 2001/09/08 06:34:28 yw Exp $
 
 use ExtUtils::testlib;
 use strict;
 use Jvm;
+#specify the CLASSPATH if .class is not in current directory
+#$Jvm::CLASSPATH="./"; 
 
 new Jvm();
 print sprintf("version:%x\n\n", Jvm::getVersion());

@@ -4,7 +4,7 @@
 # This program is free software; you can redistribute it and/or 
 # modify it under the same terms as Perl itself. 
 #
-# Ident = $Id: Jvm.pm,v 1.17 2001/04/28 05:20:26 yw Exp $
+# Ident = $Id: Jvm.pm,v 1.20 2001/09/08 07:03:37 yw Exp $
 
 #############################
 package jobject;
@@ -114,13 +114,15 @@ package Jvm;
 ##############################
 
 use strict;
-use vars qw($VERSION @ISA @EXPORT @EXPORT_OK $DEBUG);
+use vars qw($VERSION @ISA @EXPORT @EXPORT_OK $DEBUG $CLASSPATH $LIBPATH);
 
 require Exporter;
 require DynaLoader;
 require AutoLoader;
 
 $DEBUG = 0;
+$CLASSPATH = "."; #just to get rid of "-w" warnings.
+$LIBPATH   = ".";
 
 @ISA = qw(Exporter DynaLoader);
 # Items to export into callers namespace by default. Note: do not export
@@ -129,7 +131,7 @@ $DEBUG = 0;
 @EXPORT = qw(
 	
 );
-$VERSION = '0.9.1';
+$VERSION = '0.9.2';
 
 bootstrap Jvm $VERSION;
 
@@ -529,9 +531,29 @@ set B<static> member of class $class to $value.
 
 This function invokes "System.out.println($obj)" to dump the java object $obj.
 
+=head1 Global variables
+
+The global variables below are optional.
+
+=item CLASSPATH
+
+The path(s) where the Java VM searches for java class files
+
+$Jvm::CLASSPATH = "/home/java/classes";
+
+=item LIBPATH
+
+The path(s) where the Java VM searches for JNI libraries
+
+$Jvm::LIBPATH = "/home/java/classes/native";
+
 =head1 AUTHOR
 
-Ye, Wei      yw@alabanza.net
+Ye, Wei      w_e_i_y_e@yahoo.com
+
+=head1 CREDITS
+
+Claes Jacobsson (claes@contiller.se) - $Jvm::CLASSPATH and $Jvm::LIBPATH
 
 =head1 SEE ALSO
 

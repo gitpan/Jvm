@@ -4,7 +4,7 @@
  * This program is free software; you can redistribute it and/or 
  * modify it under the same terms as Perl itself.
  *
- * Ident = $Id: Jvm.xs,v 1.11 2000/09/22 02:24:44 yw Exp $
+ * Ident = $Id: Jvm.xs,v 1.13 2001/09/08 06:57:09 yw Exp $
  */
 
 #include "EXTERN.h"
@@ -24,16 +24,41 @@ JNIEnv* createJVM () {
 	JavaVMInitArgs vm_args;
     jint res;
     char classpath[2048];
-	JavaVMOption options[1];
+	JavaVMOption options[3] = {{NULL,NULL},{NULL,NULL},{NULL,NULL}};
 
+	SV 	*cp, *curr_cp, *lp, *curr_lp;
+	char *cp_ptr, *lp_ptr;
+	STRLEN cp_len, lp_len;
 
     /* IMPORTANT: specify vm_args version # if you use JDK1.1.2 and beyond */
     vm_args.version = JNI_VERSION_1_2;
     vm_args.ignoreUnrecognized = JNI_FALSE;
 	/* if don't specify this option, gdb will core dump */
 	options[0].optionString="-XX:+AllowUserSignalHandlers";
+
+	/* Add our classpath set in $Jvm::CLASSPATH */
+	cp = get_sv("Jvm::CLASSPATH", 0);
+	if(cp != NULL) {
+		curr_cp = newSVpv("-Djava.class.path=:", 0);
+		sv_catsv(curr_cp, cp);
+		cp_ptr = SvPV(curr_cp, cp_len);
+		Newz(1, options[1].optionString, cp_len + 1, char);
+		options[1].optionString = strcpy(options[1].optionString, cp_ptr);
+	}
+
+
+	/* Add our librarypath set in $Jvm::LIBPATH */
+	lp = get_sv("Jvm::LIBPATH", 0);
+	if(lp != NULL) {
+		curr_lp = newSVpv("-Djava.library.path=:", 0);
+		sv_catsv(curr_lp, lp);
+		lp_ptr = SvPV(curr_lp, lp_len);
+		Newz(1, options[2].optionString, lp_len + 1, char);
+		options[2].optionString = strcpy(options[2].optionString, lp_ptr);
+	}
+
 	vm_args.options = options; 
-    vm_args.nOptions = 1;
+    vm_args.nOptions = 3;
 
 	JNI_GetDefaultJavaVMInitArgs(&vm_args);
 
@@ -967,5 +992,3 @@ callObjectMethod(obj, mid, args)
 
 	OUTPUT:
 	RETVAL
-
-
