@@ -1,4 +1,4 @@
-// Ident = $Id: Prog.java,v 1.2 2000/09/24 03:28:02 yw Exp $ 
+// Ident = $Id: Prog.java,v 1.1.1.1 2002/05/01 17:42:24 aknaff Exp $ 
 
 import java.io.*;
 

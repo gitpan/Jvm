@@ -1,4 +1,4 @@
-# Ident = $Id: README,v 1.6 2001/04/28 05:20:26 yw Exp $
+# Ident = $Id: README,v 1.2 2002/05/01 18:38:13 aknaff Exp $
 
 Jvm - Java Virtual Machine Extension Version 0.9.1
 
@@ -35,3 +35,5 @@ San Jose, California
 
 Apr 27, 2000
 
+Alain Knaff <alain@knaff.lu>
+May 1st, 2002

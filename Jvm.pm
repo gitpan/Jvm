@@ -1,10 +1,10 @@
 #!/usr/bin/perl -w
-# Copyright (c) 2000 Ye, wei. 
+# Copyright (c) 2000 Ye, wei. (c) 2002, Alain Knaff
 # All rights reserved. 
 # This program is free software; you can redistribute it and/or 
 # modify it under the same terms as Perl itself. 
 #
-# Ident = $Id: Jvm.pm,v 1.20 2001/09/08 07:03:37 yw Exp $
+# Ident = $Id: Jvm.pm,v 1.3 2002/05/01 18:38:13 aknaff Exp $
 
 #############################
 package jobject;
@@ -13,27 +13,28 @@ package jobject;
 use strict;
 use vars qw($AUTOLOAD);
 
+use Carp;
 
 #invoke an object's method.
 sub invoke {
     my($obj, $methodName, $methodSig, @args) = @_;
 
     if(! $methodName) {
-	die "Error: missing method!";
+	Carp::croak "Error: missing method!";
     }
     if(! $methodSig) {
-	die "Error: missing methodSignature!";
+	Carp::croak "Error: missing methodSignature!";
     }
 
     my $cls = $obj->getObjectClass();
     if(! $cls) {
-	die "Failed to getObjectClass()!";
+	Carp::croak "Failed to getObjectClass()!";
     }
     Jvm::DEBUG("CLS: $cls");
 
     my $mid = $cls->getMethodID($methodName, $methodSig);
     if(! $mid) {
-	die "Failed to get instance methodID for '$methodName($methodSig)'!";
+	Carp::croak "Failed to get instance methodID for '$methodName($methodSig)'!";
     }
     Jvm::DEBUG("Method: $mid");
 
@@ -43,7 +44,7 @@ sub invoke {
     my($returnType) = pop(@sig);
 
     if(scalar(@sig) != scalar(@args)) {
-	die "Error: The count of Signatures doesn't match that of Arguments!";
+	Carp::croak "Error: The count of Signatures doesn't match that of Arguments!";
     }
 
     #Convert Perl args to Java args.
@@ -73,7 +74,7 @@ sub invoke {
     } elsif($returnType =~/^L/) {
 	$ret = $obj->callObjectMethod($mid, $_args);
 
-	if($returnType eq 'Ljava/lang/String;') {
+	if(defined $ret && $returnType eq 'Ljava/lang/String;') {
 
 	    ##########################################
 	    # Now that the return string is 'jstring',
@@ -86,14 +87,16 @@ sub invoke {
 	}
     } elsif($returnType=~/^\[/) {
 	$ret = $obj->callObjectMethod($mid, $_args);
+	Jvm::handleException();
 	bless $ret, "jobject";
 	# convert jobjectArray to Perl Array 
 	$ret = Jvm::returnArray($returnType, $ret);
 	return (@{$ret});
     } else {
-	die "unknown return Type: '$returnType'";
+	Carp::croak "unknown return Type: '$returnType'";
     }
 
+    Jvm::handleException();
     return $ret;
 }
 
@@ -131,7 +134,7 @@ $LIBPATH   = ".";
 @EXPORT = qw(
 	
 );
-$VERSION = '0.9.2';
+$VERSION = '0.9.3';
 
 bootstrap Jvm $VERSION;
 
@@ -148,7 +151,7 @@ sub new {
 
     if($className) {
 	if(! $methodSig) {
-	    die "Error: missing constructor signature!";
+	    Carp::croak "Error: missing constructor signature!";
 	}
 
 	my(@sig) = _parseSig($methodSig);
@@ -158,42 +161,56 @@ sub new {
 	
 	my $cls = findClass($className);
 	if(! $cls) {
-	    die "Failed to find class '$className'";
+	    Carp::croak "Failed to find class '$className'";
 	}
 
 	my $mid = $cls->getMethodID("<init>", $methodSig);
 	if(! $mid) {
-	    die "Failed to get method ID for '$methodSig'!";
+	    Carp::croak "Failed to get method ID for '$methodSig'!";
 	}
 	return $cls->newObject($mid, $_args);
     } 
 
 }
 
+my $lastException;
+
+sub getLastException {
+    return $lastException;
+}
+
+sub handleException {
+    my $exc = getException();
+    if(defined $exc) {
+      my $str = $exc->toString("()Ljava/lang/String;");
+      $lastException = $exc;
+      Carp::croak "$str";
+    }
+}
 
 sub call {
     my($className, $methodName, $methodsig, @args) = @_;
 
     if(! $className) {
-	die "Error: missing class name!";
+	Carp::croak "Error: missing class name!";
     }
     if(! $methodName) {
-	die "Error: missing method name!";
+	Carp::croak "Error: missing method name!";
     }
     if(! $methodsig) {
-	die "Error: missing method signature!";
+	Carp::croak "Error: missing method signature!";
     }
 
 
     my $class = findClass($className);
     if(! $class) {
-	die "find class failed";
+	Carp::croak "find class failed";
     }
     Jvm::DEBUG("Cls: $class");
 
     my $mid = $class->getStaticMethodID($methodName, $methodsig);
     if(! $mid) {
-	die "find static methodID failed";
+	Carp::croak "find static methodID failed";
     }
     Jvm::DEBUG("Method: $mid");
 
@@ -202,7 +219,7 @@ sub call {
     my($returnType) = pop(@sig);
 
     if(scalar(@sig) != scalar(@args)) {
-	die "Error: The count of Signatures doesn't match that of Arguments!";
+	Carp::croak "Error: The count of Signatures doesn't match that of Arguments!";
     }
 
     my $_args = _createArgs(\@sig, \@args);
@@ -230,7 +247,7 @@ sub call {
 	$ret = $class->callStaticVoidMethod($mid, $_args);
     } elsif($returnType =~/^L/) {
 	$ret = $class->callStaticObjectMethod($mid, $_args);
-	if($returnType eq 'Ljava/lang/String;') {
+	if(defined $ret && $returnType eq 'Ljava/lang/String;') {
 	    bless $ret, "jstring";
 	    $ret = $ret->getString();
 	} else {
@@ -238,14 +255,16 @@ sub call {
 	}
     } elsif($returnType=~/\[/) {
 	$ret = $class->callStaticObjectMethod($mid, $_args);
+	Jvm::handleException();
 	bless $ret, "jobject";
 	# convert jobjectArray to Perl Array 
 	$ret = Jvm::returnArray($returnType, $ret);
 	return (@{$ret});
     } else {
-	die "unknown return Type: '$returnType'";
+	Carp::croak "unknown return Type: '$returnType'";
     }
 
+    Jvm::handleException();
     return $ret;
 }
 
@@ -259,7 +278,7 @@ sub _parseSig {
 	@in    = _parseTypes($1);
 	($out) = _parseTypes($2);
     } else {
-	die "unrecorgnized sig '$sig'";
+	Carp::croak "unrecorgnized sig '$sig'";
     }
     return (@in, $out);
 }
@@ -287,7 +306,7 @@ sub _parseTypes {
 
 	    push (@arg, $1);
 	} else {
-	    die "un-recorgnized sig: $sig\n";
+	    Carp::croak "un-recorgnized sig: $sig\n";
 	}
     }
     return @arg;
@@ -297,17 +316,17 @@ sub getProperty {
     my($className, $fieldName, $sig) = @_;
 
     if(! $sig) {
-	die "Error: missing signature!";
+	Carp::croak "Error: missing signature!";
     }
 
     my $cls = Jvm::findClass($className);
     if(! $cls) {
-	die "Failed to get class '$className'!";
+	Carp::croak "Failed to get class '$className'!";
     }
 
     my $fld = $cls->getStaticFieldID($fieldName, $sig);
     if(! $fld) {
-	die "Failed to get static Field ID '$fieldName($sig)'!";
+	Carp::croak "Failed to get static Field ID '$fieldName($sig)'!";
     }
 
     my $ret;
@@ -328,7 +347,7 @@ sub getProperty {
     } elsif($sig eq "D") {
 	$ret = $cls->getStaticDoubleField($fld);
     } elsif($sig eq "V") {
-	die "Error: couldn't get a *Void* field!";
+	Carp::croak "Error: couldn't get a *Void* field!";
     } elsif($sig =~/^L/) {
 	$ret = $cls->getStaticObjectField($fld);
 	if($sig eq 'Ljava/lang/String;') {
@@ -336,7 +355,7 @@ sub getProperty {
 	    $ret=$ret->getString();
 	}
     } else {
-	die "unknown sig '$sig'";
+	Carp::croak "unknown sig '$sig'";
     }
 
     return $ret;
@@ -346,21 +365,21 @@ sub setProperty {
     my($className, $fieldName, $sig, $value) = @_;
 
     if(! $sig) {
-	die "Error: missing signature!";
+	Carp::croak "Error: missing signature!";
     }
     if(! defined $value) {
-	die "Error: missing value!";
+	Carp::croak "Error: missing value!";
     }
 
     my $cls = Jvm::findClass($className);
     if(! $cls) {
-	die "Failed to find class '$className'!";
+	Carp::croak "Failed to find class '$className'!";
     }
     Jvm::DEBUG("Cls: $cls");
    
     my $fld = $cls->getStaticFieldID($fieldName, $sig);
     if(! $fld) {
-	die "Failed to find static field ID for '$fieldName($sig)'!";
+	Carp::croak "Failed to find static field ID for '$fieldName($sig)'!";
     }
     Jvm::DEBUG("FLD: $fld");
 
@@ -381,7 +400,7 @@ sub setProperty {
     } elsif($sig eq "D") {
 	$cls->setStaticDoubleField($fld, $value);
     } elsif($sig eq "V") {
-	die "Error: couldn't set a *Void* field!";
+	Carp::croak "Error: couldn't set a *Void* field!";
     } elsif($sig =~/^L/) {
 	if($sig eq 'Ljava/lang/String;') {
 	    $value=newStringUTF($value);
@@ -389,7 +408,7 @@ sub setProperty {
 	}
 	$cls->setStaticObjectField($fld, $value);
     } else {
-	die "unknown sig '$sig'";
+	Carp::croak "unknown sig '$sig'";
     }
 
 }
@@ -550,6 +569,7 @@ $Jvm::LIBPATH = "/home/java/classes/native";
 =head1 AUTHOR
 
 Ye, Wei      w_e_i_y_e@yahoo.com
+Alain Knaff  alain@knaff.lu
 
 =head1 CREDITS
 

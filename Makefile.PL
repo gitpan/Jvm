@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-#Ident = $Id: Makefile.PL,v 1.13 2000/09/24 05:06:15 yw Exp $
+#Ident = $Id: Makefile.PL,v 1.2 2002/05/01 18:38:13 aknaff Exp $
 
 use ExtUtils::MakeMaker;
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
@@ -84,7 +84,7 @@ WriteMakefile(
     'DEFINE'	=> "",     # e.g., '-DHAVE_SOMETHING' 
     'INC'	=> join(" ", map { "-I$_" } getSortedPath(%JAVA_INC)),     # e.g., '-I/usr/include/other' 
 	'OBJECT' => "Jvm\$(OBJ_EXT)",
-	"AUTHOR"    => "Ye, Wei",
+	"AUTHOR"    => "Ye, Wei & Alain Knaff",
 	"clean"     => {FILES=> "*.class"},
 );
 

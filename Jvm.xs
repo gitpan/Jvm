@@ -1,10 +1,10 @@
 /* -*- tab-width: 4; -*- 
- * Copyright (c) 2000 Ye, wei. 
+ * Copyright (c) 2000 Ye, wei, (c) 2002 Alain Knaff
  * All rights reserved.
  * This program is free software; you can redistribute it and/or 
  * modify it under the same terms as Perl itself.
  *
- * Ident = $Id: Jvm.xs,v 1.13 2001/09/08 06:57:09 yw Exp $
+ * Ident = $Id: Jvm.xs,v 1.3 2002/05/01 18:38:13 aknaff Exp $
  */
 
 #include "EXTERN.h"
@@ -238,6 +238,15 @@ newStringUTF(str)
 	OUTPUT:
 	RETVAL
 
+jobject
+getException()
+    CODE:
+	RETVAL=(*g_jvm)->ExceptionOccurred(g_jvm);
+	(*g_jvm)->ExceptionClear(g_jvm);
+
+    OUTPUT:
+    RETVAL
+
 _jvalueArray
 _createArgs(pSigs, pArgs)
 	SV* pSigs
@@ -293,14 +302,24 @@ _createArgs(pSigs, pArgs)
 			} else if(strcmp(pSig, "D")==0) {
 				RETVAL[i].d=(jdouble)SvNV(sv);
 			} else if(strcmp(pSig, "Ljava/lang/String;")==0) {
-				jstring jstr = (*g_jvm)->NewStringUTF(g_jvm,  SvPV(sv,PL_na));
-				RETVAL[i].l=jstr;
+			    if(!SvOK(sv)) {
+					RETVAL[i].l= NULL;
+				} else {
+				    jstring jstr = (*g_jvm)->NewStringUTF(g_jvm,  SvPV(sv,PL_na));
+				    RETVAL[i].l=jstr;
+                }
 			} else if(pSig[0] == 'L') {
-				SV* s= SvRV(sv);
-				IV tmp = SvIV(s);
-				jobject obj = (jobject) tmp;
-				RETVAL[i].l=obj;
-
+			    if(!SvOK(sv)) {
+				    RETVAL[i].l = NULL;
+				} else if(SvROK(sv)) {
+				    SV* s= SvRV(sv);
+				    IV tmp = SvIV(s);
+				    jobject obj = (jobject) tmp;
+				    RETVAL[i].l=obj;
+				} else {
+				    jstring jstr = (*g_jvm)->NewStringUTF(g_jvm,  SvPV(sv,PL_na));
+				    RETVAL[i].l=jstr;
+				}
 				/* sv_dump((SV*)(SvRV(sv_arg[0])));	 */
 			} else if(pSig[0] == '[') {
 				if(SvROK(sv)) {
@@ -449,6 +468,16 @@ getString(jstr)
 ###############################################################
 
 MODULE = Jvm		PACKAGE = jclass
+
+jclass
+getSuperclass(clazz)
+	jclass clazz
+
+	CODE:
+	RETVAL=(*g_jvm)->GetSuperclass(g_jvm, clazz);
+	
+	OUTPUT:
+	RETVAL
 
 jmethodID
 getMethodID(cls, methodName, sig)

@@ -1,9 +1,9 @@
-# Copyright (c) 2000 Ye, wei. 
+# Copyright (c) 2000 Ye, wei. (c) 2002, Alain Knaff
 # All rights reserved. 
 # This program is free software; you can redistribute it and/or 
 # modify it under the same terms as Perl itself. 
 #
-# Ident = $Id: test.pl,v 1.3 2000/09/11 04:13:19 yw Exp $
+# Ident = $Id: test.pl,v 1.4 2002/05/01 18:38:13 aknaff Exp $
 
 
 # Before `make install' is performed this script should be runnable with
@@ -61,6 +61,50 @@ my $STEP = 1;
     my $i = Jvm::call("java.lang.Integer", "parseInt", "(Ljava/lang/String;)I", "$rand");
     print ($i == $rand ? "ok $STEP\n" : "not ok $STEP\n");
 }
+
+{
+    # static method call returning NULL
+    $STEP ++;
+    my $oldValue = Jvm::call("java.lang.System", "setProperty", "(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;", "test", "ing");
+    print "ok $STEP\n";
+}
+
+{
+    # method call taking a string argument
+    $STEP ++;
+    system("javac Exc.java");
+    my $systemOut = Jvm::getProperty("java.lang.System", "out", "Ljava/io/PrintStream;");
+
+    print "Object println test: (should see: System.out, a test, null)\n";
+    $systemOut->println("(Ljava/lang/Object;)V", $systemOut);
+    $systemOut->println("(Ljava/lang/Object;)V", "a test");
+    $systemOut->println("(Ljava/lang/Object;)V", undef);
+    print "String println test: (should see: a test, null)\n";
+    $systemOut->println("(Ljava/lang/String;)V", "a test");
+    $systemOut->println("(Ljava/lang/String;)V", undef);
+    print "ok $STEP\n";
+}
+
+
+{
+    # Catching an exception
+    # We try to fetch a property whose key is the empty string, in order
+    # to deliberately trigger an IllegalArgumentException
+    $STEP ++;
+    if(!eval {
+      Jvm::call("java.lang.System", "getProperty", 
+		"(Ljava/lang/String;)Ljava/lang/String;",
+		"");
+    }) {
+      if($@ =~ /IllegalArgumentException: key can.t be empty/) {
+	print "ok $STEP\n";
+      } else {
+	print "not ok $STEP $@\n";
+      }
+    } else {
+      print "not ok $STEP\n";
+    }
+  }
 
 {
     # java.lang.Integer instance create and call

@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-#Ident = $Id: awt.pl,v 1.1 2000/09/22 03:11:37 yw Exp $
+#Ident = $Id: awt.pl,v 1.1.1.1 2002/05/01 17:42:24 aknaff Exp $
 
 use ExtUtils::testlib;
 use strict;
